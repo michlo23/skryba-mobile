@@ -2,7 +2,7 @@
  * without signal still fails at the Scribe call, but the UI is never a blank
  * page. Bump CACHE on every deploy; the old one is dropped on activate. */
 
-const CACHE = 'skryba-v1.2.0';
+const CACHE = 'skryba-v1.2.1';
 const SHELL = [
   './',
   'index.html',

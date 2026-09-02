@@ -5,7 +5,7 @@
  * device. That is the whole reason this can be a plain static page.
  */
 
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const ENDPOINT = 'https://api.elevenlabs.io/v1/speech-to-text';
 const MODEL = 'scribe_v2';
 const MAX_SECONDS = 15 * 60; // same safety valve as the desktop app
@@ -1014,5 +1014,12 @@ document.addEventListener('DOMContentLoaded', () => ui.init());
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+  // A new shell arrived while this one was running. Files are revalidated one
+  // at a time, so the page on screen can be a mix of old and new — reload as
+  // soon as nothing is at stake, and the next tap lands on matching code.
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (rec.active || document.body.classList.contains('busy')) return;
+    location.reload();
   });
 }

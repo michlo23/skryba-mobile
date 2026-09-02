@@ -485,6 +485,8 @@ input:focus, select:focus { outline: 2px solid var(--terra-deep); outline-offset
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   animation: pop 0.18s ease-out;
 }
+/* `display: flex` above would otherwise beat the UA's [hidden] rule. */
+.toast[hidden] { display: none; }
 @keyframes pop { from { opacity: 0; transform: translate(-50%, 8px); } }
 
 @media (prefers-reduced-motion: reduce) {
