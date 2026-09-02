@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Skryba</title>
+<meta name="description" content="Dyktowanie notatek przez ElevenLabs Scribe.">
+<meta name="theme-color" content="#14120F">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Skryba">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <h1>Skryba</h1>
+  <button id="open-settings" class="icon-btn" aria-label="Ustawienia">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"/><path d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.8-1L14.9 3H10l-.4 2.6c-.6.2-1.2.6-1.8 1l-2.3-1-2 3.4L5.6 11a7.7 7.7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.6.4 1.2.8 1.8 1l.4 2.6h4.9l.4-2.6c.6-.2 1.2-.6 1.8-1l2.3 1 2-3.4-2-1.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  </button>
+</header>
+
+<main>
+  <!-- Recorder -->
+  <section class="stage">
+    <div class="langs" role="group" aria-label="Język dyktowania">
+      <button class="lang" data-lang="pl" aria-pressed="true">Polski</button>
+      <button class="lang" data-lang="en" aria-pressed="false">English</button>
+    </div>
+
+    <button id="rec" class="rec" aria-label="Zacznij nagrywać">
+      <span class="rec-ring"></span>
+      <span class="rec-core"></span>
+      <svg class="rec-glyph" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/>
+        <path d="M5 11v1a7 7 0 0 0 14 0v-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 19v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <div class="meter" id="meter" aria-hidden="true"></div>
+    <p class="status" id="status">Dotknij, żeby dyktować</p>
+  </section>
+
+  <!-- Result of the last transcription -->
+  <section id="result" class="card result" hidden>
+    <div class="result-head">
+      <span class="badge" id="result-lang">PL</span>
+      <span class="dim" id="result-meta"></span>
+    </div>
+    <p class="result-text" id="result-text"></p>
+    <div class="row">
+      <button class="btn primary" id="copy">Kopiuj</button>
+      <button class="btn" id="share">Udostępnij</button>
+      <button class="btn ghost" id="dismiss">Zamknij</button>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="notes">
+    <div class="notes-head">
+      <h2>Notatki</h2>
+      <button class="link" id="export" hidden>Eksportuj .md</button>
+    </div>
+    <ul id="note-list" class="note-list"></ul>
+    <p class="empty dim" id="notes-empty">Jeszcze nic tu nie ma.</p>
+  </section>
+</main>
+
+<!-- Settings sheet -->
+<div class="sheet-scrim" id="scrim" hidden></div>
+<section class="sheet" id="settings" hidden aria-label="Ustawienia">
+  <div class="sheet-grip"></div>
+  <h2>Ustawienia</h2>
+
+  <label class="field">
+    <span>Klucz ElevenLabs</span>
+    <input id="key" type="password" inputmode="text" autocomplete="off" autocapitalize="off"
+           spellcheck="false" placeholder="sk_…">
+  </label>
+  <div class="row">
+    <button class="btn" id="paste-key">Wklej</button>
+    <button class="btn" id="show-key">Pokaż</button>
+    <button class="btn primary" id="save-key">Zapisz i sprawdź</button>
+  </div>
+  <p class="hint" id="key-status">Klucz zostaje w tym telefonie — nagranie leci prosto do ElevenLabs.</p>
+
+  <label class="field">
+    <span>Domyślny język</span>
+    <select id="default-lang">
+      <option value="pl">Polski</option>
+      <option value="en">English</option>
+    </select>
+  </label>
+
+  <label class="check">
+    <input type="checkbox" id="autocopy" checked>
+    <span>Kopiuj do schowka od razu po transkrypcji</span>
+  </label>
+
+  <label class="check">
+    <input type="checkbox" id="autostart">
+    <span>Zacznij nagrywać zaraz po otwarciu apki</span>
+  </label>
+  <p class="hint">Do tego jest też adres <code id="autostart-url">?rec=1</code> — ikona z tym linkiem
+     albo skrót zaczyna nagrywanie od razu.</p>
+
+  <div class="row end">
+    <button class="btn ghost danger" id="wipe">Usuń wszystko</button>
+    <button class="btn primary" id="close-settings">Gotowe</button>
+  </div>
+  <p class="hint version" id="version"></p>
+</section>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,434 @@
+/* Skryba mobile — the macOS app's palette: ink background, cream ink,
+   terracotta for anything live. Dark only; this thing gets used at night. */
+
+:root {
+  --ink-900: #14120F;
+  --ink-800: #1A1815;
+  --ink-700: #23201C;
+  --ink-600: #2C2A28;
+  --ink-500: #3A3632;
+  --cream: #F6EDE1;
+  --cream-dim: #C9BEB0;
+  --cream-faint: #8C8377;
+  --terra: #E78565;
+  --terra-deep: #B44A32;
+  --danger: #E06A5A;
+
+  --radius: 16px;
+  --pad: 20px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  background: var(--ink-900);
+  color: var(--cream);
+  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  overscroll-behavior-y: contain;
+}
+
+body {
+  min-height: 100dvh;
+  padding: calc(var(--safe-top) + 8px) var(--pad) calc(var(--safe-bottom) + 28px);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Header ------------------------------------------------------------- */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.bar h1 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--cream-dim);
+  cursor: pointer;
+}
+.icon-btn:active { background: var(--ink-700); }
+.icon-btn svg { width: 22px; height: 22px; fill: currentColor; }
+
+/* Recorder stage ------------------------------------------------------ */
+
+.stage {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding: 22px 0 26px;
+}
+
+.langs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--ink-700);
+  border-radius: 999px;
+}
+
+.lang {
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--cream-faint);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.lang[aria-pressed="true"] {
+  background: var(--ink-500);
+  color: var(--cream);
+}
+body.recording .lang { opacity: 0.35; pointer-events: none; }
+
+/* The button is deliberately enormous — it gets pressed one-handed,
+   in the dark, without looking. */
+.rec {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  touch-action: manipulation;
+}
+
+.rec-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--ink-500);
+  transition: transform 0.18s, border-color 0.18s;
+}
+
+.rec-core {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--ink-600), var(--ink-700));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: background 0.18s, transform 0.18s, border-radius 0.25s, inset 0.25s;
+}
+
+.rec-glyph {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  fill: var(--cream);
+  stroke: var(--cream);
+  transition: opacity 0.18s;
+}
+
+.rec:active .rec-core { transform: scale(0.96); }
+
+/* Recording: the core becomes a terracotta square (a stop button) and the
+   ring breathes with the level meter driven from JS. */
+body.recording .rec-core {
+  inset: 46px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--terra), var(--terra-deep));
+}
+body.recording .rec-glyph { opacity: 0; }
+body.recording .rec-ring {
+  border-color: var(--terra-deep);
+  transform: scale(var(--level-scale, 1));
+}
+
+body.busy .rec { pointer-events: none; }
+body.busy .rec-ring {
+  border-color: var(--terra);
+  animation: spin 0.9s linear infinite;
+  border-right-color: var(--ink-500);
+  border-bottom-color: var(--ink-500);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.meter {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 26px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+body.recording .meter { opacity: 1; }
+.meter i {
+  display: block;
+  width: 3px;
+  min-height: 3px;
+  border-radius: 2px;
+  background: var(--terra);
+  transition: height 0.07s linear;
+}
+
+.status {
+  margin: 0;
+  min-height: 24px;
+  font-size: 15px;
+  color: var(--cream-faint);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.status.live { color: var(--terra); font-weight: 500; }
+.status.error { color: var(--danger); }
+
+/* Cards --------------------------------------------------------------- */
+
+.card {
+  background: var(--ink-800);
+  border: 1px solid var(--ink-600);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.result { margin-bottom: 26px; }
+
+.result-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--ink-600);
+  color: var(--terra);
+}
+
+.result-text {
+  margin: 0 0 14px;
+  font-size: 17px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.dim { color: var(--cream-faint); font-size: 13px; }
+
+/* Buttons ------------------------------------------------------------- */
+
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row.end { justify-content: space-between; margin-top: 22px; }
+
+.btn {
+  flex: 1 1 auto;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--ink-500);
+  border-radius: 12px;
+  background: var(--ink-700);
+  color: var(--cream);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn:active { background: var(--ink-600); }
+.btn.primary {
+  background: var(--terra-deep);
+  border-color: var(--terra-deep);
+  color: #fff;
+}
+.btn.primary:active { filter: brightness(1.15); }
+.btn.ghost { background: transparent; border-color: var(--ink-600); color: var(--cream-dim); }
+.btn.danger { color: var(--danger); }
+.btn[disabled] { opacity: 0.45; pointer-events: none; }
+
+.link {
+  border: 0;
+  background: none;
+  color: var(--terra);
+  font-size: 14px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+/* Notes --------------------------------------------------------------- */
+
+.notes-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.notes-head h2 {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--cream-faint);
+  margin: 0;
+}
+
+.note-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.note {
+  background: var(--ink-800);
+  border: 1px solid var(--ink-700);
+  border-radius: 14px;
+  padding: 13px 14px;
+}
+
+.note-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--cream-faint);
+  margin-bottom: 6px;
+}
+.note-top .badge { font-size: 10px; padding: 2px 6px; }
+
+.note-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--cream-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.note.open .note-body {
+  -webkit-line-clamp: unset;
+  color: var(--cream);
+  white-space: pre-wrap;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.note-actions { display: none; gap: 8px; margin-top: 12px; }
+.note.open .note-actions { display: flex; }
+
+.empty { text-align: center; padding: 18px 0; }
+
+/* Settings sheet ------------------------------------------------------ */
+
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 10;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 11;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--ink-800);
+  border-top: 1px solid var(--ink-600);
+  border-radius: 22px 22px 0 0;
+  padding: 8px var(--pad) calc(var(--safe-bottom) + 24px);
+  animation: rise 0.22s ease-out;
+}
+@keyframes rise { from { transform: translateY(100%); } }
+
+.sheet-grip {
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ink-500);
+  margin: 4px auto 14px;
+}
+
+.sheet h2 { font-size: 18px; margin: 0 0 18px; }
+
+.field { display: grid; gap: 7px; margin-bottom: 12px; }
+.field > span { font-size: 13px; color: var(--cream-faint); }
+
+input[type="password"], input[type="text"], select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  font-size: 16px; /* < 16px makes iOS zoom the page on focus */
+  color: var(--cream);
+  background: var(--ink-700);
+  border: 1px solid var(--ink-500);
+  border-radius: 12px;
+  -webkit-user-select: text;
+  user-select: text;
+  appearance: none;
+}
+input:focus, select:focus { outline: 2px solid var(--terra-deep); outline-offset: -1px; }
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 15px;
+  color: var(--cream-dim);
+}
+.check input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--terra-deep);
+  flex: none;
+}
+
+.hint { font-size: 13px; color: var(--cream-faint); margin: 8px 0 18px; }
+.hint.ok { color: var(--terra); }
+.hint.bad { color: var(--danger); }
+.hint code {
+  background: var(--ink-700);
+  padding: 1px 5px;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+.version { text-align: center; margin: 18px 0 0; opacity: 0.5; }
+
+/* Toast --------------------------------------------------------------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 28px);
+  transform: translateX(-50%);
+  z-index: 20;
+  background: var(--cream);
+  color: var(--ink-900);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 11px 18px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: pop 0.18s ease-out;
+}
+@keyframes pop { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
