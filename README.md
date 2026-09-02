@@ -118,7 +118,15 @@ na macOS.
 ## Co apka robi z notatkami
 
 Każda transkrypcja trafia na listę w telefonie (`localStorage`, ostatnie 300).
-Dotknięcie notatki ją rozwija; masz przy niej **Kopiuj**, **Wyczyść** i **Usuń**.
+Dotknięcie notatki ją rozwija; masz przy niej **Kopiuj** i **Wyczyść**. Krzyżyk
+**×** w prawym górnym rogu notatki (widoczny także bez rozwijania) ją usuwa — na
+pięć sekund pojawia się **Cofnij**, gdyby palec się omsknął. To samo robi
+**Usuń** na karcie z wynikiem ostatniej transkrypcji.
+
+Nagranie, którego nie chcesz, wyrzucasz przyciskiem **Anuluj — nic nie
+zapisuj** pod licznikiem: mikrofon się zamyka, klip nie leci do Scribe i nie
+powstaje żadna notatka. Przycisk działa też w trakcie „Przepisuję…” — wtedy
+przerywa wysyłkę i również nic nie zapisuje.
 **Eksportuj .md** zrzuca całą listę do jednego pliku markdown z takim samym
 frontmatterem, jaki zapisuje wersja na macOS — czyli plik można wrzucić prosto
 do tego samego vaulta w Obsidianie.

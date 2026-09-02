@@ -45,6 +45,7 @@
 
     <div class="meter" id="meter" aria-hidden="true"></div>
     <p class="status" id="status">Dotknij, żeby dyktować</p>
+    <button id="cancel" class="btn ghost cancel">Anuluj — nic nie zapisuj</button>
   </section>
 
   <!-- Result of the last transcription -->
@@ -60,6 +61,7 @@
       <button class="btn" id="restore" hidden>Przywróć oryginał</button>
       <button class="btn" id="share">Udostępnij</button>
       <button class="btn ghost" id="dismiss">Zamknij</button>
+      <button class="btn ghost danger" id="delete">Usuń</button>
     </div>
   </section>
 
@@ -158,7 +160,10 @@
   <p class="hint version" id="version"></p>
 </section>
 
-<div class="toast" id="toast" hidden></div>
+<div class="toast" id="toast" hidden>
+  <span id="toast-text"></span>
+  <button class="toast-action" id="toast-action" hidden></button>
+</div>
 
 <script src="app.js"></script>
 </body>

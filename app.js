@@ -5,7 +5,7 @@
  * device. That is the whole reason this can be a plain static page.
  */
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const ENDPOINT = 'https://api.elevenlabs.io/v1/speech-to-text';
 const MODEL = 'scribe_v2';
 const MAX_SECONDS = 15 * 60; // same safety valve as the desktop app
@@ -92,8 +92,18 @@ const store = {
     store.saveNotes(list);
     return list;
   },
+  /** Returns the removed note's position, so an undo can put it back where it was. */
   removeNote(id) {
-    const list = store.notes().filter((n) => n.id !== id);
+    const list = store.notes();
+    const index = list.findIndex((n) => n.id === id);
+    if (index >= 0) list.splice(index, 1);
+    store.saveNotes(list);
+    return index;
+  },
+  insertNote(note, index) {
+    const list = store.notes();
+    if (list.some((n) => n.id === note.id)) return list;
+    list.splice(Math.min(Math.max(index, 0), list.length), 0, note);
     store.saveNotes(list);
     return list;
   },
@@ -132,12 +142,19 @@ function when(iso) {
 }
 
 let toastTimer;
-function toast(message) {
+let toastAction = null;
+/** `action` puts a button on the toast (e.g. "Cofnij"); the toast then stays
+ *  up long enough to be pressed. */
+function toast(message, { action = '', onAction = null, duration } = {}) {
   const el = $('#toast');
-  el.textContent = message;
+  const button = $('#toast-action');
+  $('#toast-text').textContent = message;
+  toastAction = onAction;
+  button.textContent = action;
+  button.hidden = !action;
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
+  toastTimer = setTimeout(() => { el.hidden = true; toastAction = null; }, duration ?? (action ? 5000 : 2200));
 }
 
 /** Clipboard writes are blocked outside a gesture on some browsers; the
@@ -193,7 +210,7 @@ function headerSafe(key) {
   }).join('');
 }
 
-async function transcribe(blob, lang, ext) {
+async function transcribe(blob, lang, ext, signal) {
   const key = headerSafe(store.key);
   if (!key) throw new Error('Brak klucza ElevenLabs');
 
@@ -210,8 +227,10 @@ async function transcribe(blob, lang, ext) {
       method: 'POST',
       headers: { 'xi-api-key': key },
       body: form,
+      signal,
     });
-  } catch {
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error;
     throw new Error('Brak połączenia z ElevenLabs');
   }
 
@@ -291,15 +310,17 @@ function cleanPrompt(lang) {
 /** Models that accept only their own default temperature reject the parameter
  *  outright. Rather than make the user get the model name right, drop it and
  *  ask again. */
-async function chat(url, key, body) {
+async function chat(url, key, body, signal) {
   let response;
   try {
     response = await fetch(url, {
       method: 'POST',
       headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
       body: JSON.stringify(body),
+      signal,
     });
-  } catch {
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error;
     throw new Error('Brak połączenia z modelem');
   }
   if (response.ok) return response.json();
@@ -307,7 +328,7 @@ async function chat(url, key, body) {
   const detail = await response.text();
   if (response.status === 400 && 'temperature' in body && /temperature/i.test(detail)) {
     const { temperature, ...rest } = body;
-    return chat(url, key, rest);
+    return chat(url, key, rest, signal);
   }
   throw new Error(chatError(response.status, detail));
 }
@@ -330,7 +351,7 @@ function unfence(raw) {
 }
 
 /** Returns the tidied note and the model that produced it. */
-async function cleanUp(text, lang) {
+async function cleanUp(text, lang, signal) {
   const id = store.cleanProvider;
   const provider = CLEANERS[id];
   const key = headerSafe(store.cleanKey);
@@ -344,7 +365,7 @@ async function cleanUp(text, lang) {
       { role: 'system', content: cleanPrompt(lang) },
       { role: 'user', content: text },
     ],
-  });
+  }, signal);
 
   const answer = unfence(data?.choices?.[0]?.message?.content || '');
   if (!answer) throw new Error('Model nic nie odesłał');
@@ -419,8 +440,9 @@ const rec = {
     try { this.wakeLock = await navigator.wakeLock?.request('screen'); } catch { /* optional */ }
   },
 
-  /** Resolves with the finished clip, or null if nothing usable was captured. */
-  stop() {
+  /** Resolves with the finished clip, or null if nothing usable was captured.
+   *  With `discard` the take is thrown away outright and null comes back. */
+  stop({ discard = false } = {}) {
     return new Promise((resolve) => {
       if (!this.recorder || this.stopping) return resolve(null);
       this.stopping = true;
@@ -434,13 +456,14 @@ const rec = {
       const seconds = (Date.now() - this.startedAt) / 1000;
       this.recorder.onstop = () => {
         const type = this.recorder.mimeType || this.format.mime || 'audio/webm';
-        const blob = new Blob(this.chunks, { type });
+        const blob = discard ? null : new Blob(this.chunks, { type });
+        this.chunks = [];
         this.stream.getTracks().forEach((t) => t.stop());
         this.stream = null;
         this.recorder = null;
         this.wakeLock?.release().catch(() => {});
         this.wakeLock = null;
-        resolve(blob.size > 1000 ? { blob, seconds } : null);
+        resolve(blob && blob.size > 1000 ? { blob, seconds } : null);
       };
       this.recorder.stop();
     });
@@ -492,6 +515,7 @@ const rec = {
 const ui = {
   lang: store.lang,
   pending: null, // a clip captured but not yet transcribed (app went to background)
+  inflight: null, // AbortController for the transcription under way
 
   init() {
     const meter = $('#meter');
@@ -503,10 +527,18 @@ const ui = {
     });
 
     $('#rec').addEventListener('click', () => this.toggle());
+    $('#cancel').addEventListener('click', () => this.cancel());
     $('#copy').addEventListener('click', () => this.copyResult());
     $('#clean').addEventListener('click', () => this.cleanResult());
     $('#restore').addEventListener('click', () => this.restoreResult());
     $('#dismiss').addEventListener('click', () => { $('#result').hidden = true; });
+    $('#delete').addEventListener('click', () => this.deleteResult());
+    $('#toast-action').addEventListener('click', () => {
+      const run = toastAction;
+      $('#toast').hidden = true;
+      toastAction = null;
+      run?.();
+    });
     $('#share').addEventListener('click', () => this.shareResult());
     if (!navigator.share) $('#share').hidden = true;
 
@@ -594,11 +626,27 @@ const ui = {
     return this.send(clip);
   },
 
+  /** Throws the current take away: stops the mic without keeping the clip, or
+   *  drops a transcription already in flight. Either way nothing is saved. */
+  async cancel() {
+    if (rec.active) {
+      await rec.stop({ discard: true });
+      document.body.classList.remove('recording');
+      $('#rec').setAttribute('aria-label', 'Zacznij nagrywać');
+      navigator.vibrate?.(12);
+      return this.status('Anulowane — nic nie zapisano');
+    }
+    if (this.inflight) this.inflight.abort();
+  },
+
   async send(clip) {
+    const controller = new AbortController();
+    this.inflight = controller;
+    const { signal } = controller;
     document.body.classList.add('busy');
     this.status('Przepisuję…');
     try {
-      const { text, detected } = await transcribe(clip.blob, this.lang, rec.format.ext);
+      const { text, detected } = await transcribe(clip.blob, this.lang, rec.format.ext, signal);
       const note = {
         id: crypto.randomUUID(),
         text,
@@ -612,16 +660,19 @@ const ui = {
       if (store.flag('clean.auto', false) && store.cleanKey) {
         this.status('Sprzątam…');
         try {
-          const clean = await cleanUp(note.text, note.lang);
+          const clean = await cleanUp(note.text, note.lang, signal);
           if (clean.text !== note.text) {
             note.raw = note.text;
             note.text = clean.text;
             note.cleaned = clean.model;
           }
         } catch (error) {
+          if (error?.name === 'AbortError') throw error;
           toast(`Bez sprzątania: ${error.message}`);
         }
       }
+      // Cancelled while cleaning: the text is back, but it was asked to go away.
+      if (signal.aborted) throw Object.assign(new Error('aborted'), { name: 'AbortError' });
 
       store.addNote(note);
       this.renderNotes();
@@ -629,10 +680,33 @@ const ui = {
       this.status('Dotknij, żeby dyktować');
       navigator.vibrate?.([12, 60, 12]);
     } catch (error) {
-      this.status(error.message, 'error');
+      if (error?.name === 'AbortError') this.status('Anulowane — nic nie zapisano');
+      else this.status(error.message, 'error');
     } finally {
+      this.inflight = null;
       document.body.classList.remove('busy');
     }
+  },
+
+  /** Removes a note, with a few seconds to change your mind. */
+  deleteNote(note) {
+    if (!note) return;
+    const index = store.removeNote(note.id);
+    if (index < 0) return;
+    this.renderNotes();
+    if (this.result?.id === note.id) $('#result').hidden = true;
+    toast('Usunięte', {
+      action: 'Cofnij',
+      onAction: () => {
+        store.insertNote(note, index);
+        this.renderNotes();
+        if (this.result?.id === note.id) this.showResult(note);
+      },
+    });
+  },
+
+  deleteResult() {
+    this.deleteNote(this.result);
   },
 
   async showResult(note, { copy = false } = {}) {
@@ -735,6 +809,15 @@ const ui = {
         mark.title = note.cleaned;
         top.append(mark);
       }
+      const remove = document.createElement('button');
+      remove.className = 'note-remove';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', 'Usuń notatkę');
+      remove.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.deleteNote(note);
+      });
+      top.append(remove);
 
       const body = document.createElement('p');
       body.className = 'note-body';
@@ -773,16 +856,6 @@ const ui = {
         });
         actions.append(restore);
       }
-
-      const remove = document.createElement('button');
-      remove.className = 'btn ghost danger';
-      remove.textContent = 'Usuń';
-      remove.addEventListener('click', (e) => {
-        e.stopPropagation();
-        store.removeNote(note.id);
-        this.renderNotes();
-      });
-      actions.append(remove);
 
       item.append(top, body, actions);
       item.addEventListener('click', () => item.classList.toggle('open'));

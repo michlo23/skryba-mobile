@@ -196,6 +196,17 @@ body.recording .meter { opacity: 1; }
 .status.live { color: var(--terra); font-weight: 500; }
 .status.error { color: var(--danger); }
 
+/* The way out of a take you don't want. Only there while something could
+   still be thrown away — recording, or the clip on its way to Scribe. */
+.cancel {
+  flex: 0 0 auto;
+  min-height: 40px;
+  font-size: 14px;
+  display: none;
+}
+body.recording .cancel,
+body.busy .cancel { display: inline-flex; }
+
 /* Cards --------------------------------------------------------------- */
 
 .card {
@@ -314,6 +325,23 @@ body.recording .meter { opacity: 1; }
 }
 .note-top .badge { font-size: 10px; padding: 2px 6px; }
 
+/* Always on show, unlike the rest of the actions — a note you want gone
+   shouldn't need to be opened first. */
+.note-remove {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  margin-right: -6px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cream-faint);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.note-remove:active { background: var(--ink-700); color: var(--danger); }
+
 .note-body {
   margin: 0;
   font-size: 15px;
@@ -429,7 +457,20 @@ input:focus, select:focus { outline: 2px solid var(--terra-deep); outline-offset
 
 /* Toast --------------------------------------------------------------- */
 
+.toast-action {
+  border: 0;
+  background: transparent;
+  color: var(--terra-deep);
+  font: inherit;
+  font-weight: 600;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
 .toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   position: fixed;
   left: 50%;
   bottom: calc(var(--safe-bottom) + 28px);
