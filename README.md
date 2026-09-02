@@ -81,10 +81,44 @@ Uwaga: część przeglądarek oddaje mikrofon dopiero po dotknięciu ekranu. Je�
 automatyczny start się nie uda, apka po prostu czeka na dotknięcie przycisku —
 nie pokazuje błędu.
 
+## Sprzątanie notatek
+
+Dyktowana notatka nosi na sobie ślady mówienia: „yyy”, „eee”, zacięcia, dwa razy
+to samo słowo. Skryba potrafi ją oddać modelowi, który to wycina — i nic poza
+tym nie rusza.
+
+W **Ustawieniach → Sprzątanie notatek** wybierasz dostawcę (**DeepSeek** albo
+**OpenAI**), wklejasz jego klucz i ewentualnie wpisujesz model; puste pole
+oznacza domyślny (`deepseek-chat`, `gpt-4o-mini`). Klucz i model trzymane są
+osobno dla każdego dostawcy, więc sprawdzenie drugiego nie kasuje pierwszego.
+
+Jest tu ten sam układ co ze Scribe: oba API odpowiadają przeglądarce nagłówkiem
+CORS, więc telefon rozmawia z nimi bezpośrednio, bez pośrednika, a klucz zostaje
+w `localStorage`.
+
+Sprzątanie odpalasz na dwa sposoby:
+
+- **przycisk „Wyczyść”** przy wyniku i przy każdej notatce na liście,
+- **przełącznik „Sprzątaj każdą notatkę zaraz po transkrypcji”** — wtedy dzieje
+  się to samo z siebie, kosztem sekundy-dwóch po ostatnim słowie.
+
+Oryginał zostaje zapisany zawsze, więc „Przywróć oryginał” cofa wszystko jednym
+dotknięciem. Sprzątnięta notatka nosi znaczek `czysta`, a w eksporcie `.md`
+dochodzi linia `cleanup: deepseek/deepseek-chat`.
+
+Model dostaje instrukcję po angielsku, ale z listą wypełniaczy dobraną do języka
+notatki — polska notatka jest czyszczona po polsku, angielska po angielsku, i
+nigdy nie zostaje przetłumaczona. Ten sam prompt, co do znaku, siedzi w wersji
+na macOS.
+
+> Gdy sprzątanie się nie uda — zły klucz, brak środków, padnięte API — notatka
+> zostaje w wersji surowej, a apka mówi dlaczego. Transkrypcja nigdy nie ginie
+> przez to, że drugi serwis miał zły dzień.
+
 ## Co apka robi z notatkami
 
 Każda transkrypcja trafia na listę w telefonie (`localStorage`, ostatnie 300).
-Dotknięcie notatki ją rozwija; masz przy niej **Kopiuj** i **Usuń**.
+Dotknięcie notatki ją rozwija; masz przy niej **Kopiuj**, **Wyczyść** i **Usuń**.
 **Eksportuj .md** zrzuca całą listę do jednego pliku markdown z takim samym
 frontmatterem, jaki zapisuje wersja na macOS — czyli plik można wrzucić prosto
 do tego samego vaulta w Obsidianie.
@@ -108,7 +142,7 @@ odpowiedzi ze Scribe.
 
 ```
 index.html            szkielet UI
-app.js                nagrywanie, wysyłka do Scribe, notatki, ustawienia
+app.js                nagrywanie, Scribe, sprzątanie notatek, ustawienia
 styles.css            paleta i layout (atrament + terakota, jak na macOS)
 manifest.webmanifest  instalacja jako PWA + skrót „Dyktuj"
 sw.js                 cache powłoki, żeby apka otwierała się offline

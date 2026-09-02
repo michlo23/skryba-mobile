@@ -56,6 +56,8 @@
     <p class="result-text" id="result-text"></p>
     <div class="row">
       <button class="btn primary" id="copy">Kopiuj</button>
+      <button class="btn" id="clean" hidden>Wyczyść</button>
+      <button class="btn" id="restore" hidden>Przywróć oryginał</button>
       <button class="btn" id="share">Udostępnij</button>
       <button class="btn ghost" id="dismiss">Zamknij</button>
     </div>
@@ -109,6 +111,45 @@
   </label>
   <p class="hint">Do tego jest też adres <code id="autostart-url">?rec=1</code> — ikona z tym linkiem
      albo skrót zaczyna nagrywanie od razu.</p>
+
+  <h3 class="sheet-section">Sprzątanie notatek</h3>
+  <p class="hint">Notatka idzie do modelu, który wycina „yyy”, „eee”, zacięcia i powtórzenia.
+     Nic poza tym nie rusza — nie streszcza, nie przepisuje po swojemu i nie tłumaczy.</p>
+
+  <label class="field">
+    <span>Dostawca</span>
+    <select id="clean-provider">
+      <option value="deepseek">DeepSeek</option>
+      <option value="openai">OpenAI</option>
+    </select>
+  </label>
+
+  <label class="field">
+    <span>Klucz <span id="clean-provider-name">DeepSeek</span></span>
+    <input id="clean-key" type="password" inputmode="text" autocomplete="off" autocapitalize="off"
+           spellcheck="false" placeholder="sk-…">
+  </label>
+  <div class="row">
+    <button class="btn" id="clean-paste">Wklej</button>
+    <button class="btn" id="clean-show">Pokaż</button>
+    <button class="btn primary" id="clean-save">Zapisz i sprawdź</button>
+  </div>
+  <p class="hint" id="clean-status">Bez klucza sprzątanie jest po prostu wyłączone —
+     dyktowanie działa jak dotąd.</p>
+
+  <label class="field">
+    <span>Model</span>
+    <input id="clean-model" type="text" inputmode="text" autocomplete="off" autocapitalize="off"
+           spellcheck="false" placeholder="deepseek-chat">
+  </label>
+  <p class="hint">Puste pole = domyślny model dostawcy.</p>
+
+  <label class="check">
+    <input type="checkbox" id="clean-auto">
+    <span>Sprzątaj każdą notatkę zaraz po transkrypcji</span>
+  </label>
+  <p class="hint">Wyłączone: dyktowanie kończy się natychmiast, a notatkę czyścisz
+     przyciskiem <strong>Wyczyść</strong>, kiedy zechcesz.</p>
 
   <div class="row end">
     <button class="btn ghost danger" id="wipe">Usuń wszystko</button>

@@ -235,6 +235,12 @@ body.recording .meter { opacity: 1; }
 
 .dim { color: var(--cream-faint); font-size: 13px; }
 
+.badge.soft {
+  background: transparent;
+  border: 1px solid var(--ink-600);
+  color: var(--cream-faint);
+}
+
 /* Buttons ------------------------------------------------------------- */
 
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -326,7 +332,7 @@ body.recording .meter { opacity: 1; }
   user-select: text;
 }
 
-.note-actions { display: none; gap: 8px; margin-top: 12px; }
+.note-actions { display: none; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .note.open .note-actions { display: flex; }
 
 .empty { text-align: center; padding: 18px 0; }
@@ -365,6 +371,17 @@ body.recording .meter { opacity: 1; }
 }
 
 .sheet h2 { font-size: 18px; margin: 0 0 18px; }
+
+.sheet-section {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--cream-faint);
+  margin: 8px 0 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ink-700);
+}
 
 .field { display: grid; gap: 7px; margin-bottom: 12px; }
 .field > span { font-size: 13px; color: var(--cream-faint); }
