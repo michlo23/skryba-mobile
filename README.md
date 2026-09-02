@@ -30,12 +30,18 @@ mikrofonu. `localhost` też się liczy jako bezpieczny, więc lokalnie wystarczy
 python3 -m http.server 8765     # potem http://127.0.0.1:8765 w przeglądarce
 ```
 
-Na telefonie potrzebny jest prawdziwy hosting. Katalog jest w pełni statyczny,
-więc pasuje wszędzie — GitHub Pages, Netlify, Cloudflare Pages, `vercel`:
+Na telefonie apka stoi na GitHub Pages:
 
-```bash
-npx vercel --prod        # albo: wrzuć katalog na dowolny statyczny hosting
-```
+**<https://michlo23.github.io/skryba-mobile/>**
+
+Deploy to zwykły `git push` na `main` — Pages przebudowuje się samo w kilkadziesiąt
+sekund. Katalog jest w pełni statyczny, więc równie dobrze pasuje gdzie indziej
+(Netlify, Cloudflare Pages, własny VPS z nginxem); wszystkie ścieżki są względne,
+więc podkatalog nie przeszkadza.
+
+Repo jest publiczne, ale nie ma w nim żadnego sekretu — klucz ElevenLabs żyje
+wyłącznie w `localStorage` na Twoim telefonie. Gdybyś kiedyś chciał ten adres komuś
+podać, właściwą odpowiedzią jest mały proxy trzymający klucz po stronie serwera.
 
 > Adres `http://192.168.x.x:8765` z telefonu **nie** zadziała: to nie jest
 > bezpieczny kontekst i `getUserMedia` odmówi. Do szybkiego testu w sieci
